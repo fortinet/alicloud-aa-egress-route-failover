@@ -1,0 +1,70 @@
+
+config system global
+    set hostname "SecondaryFortigate"
+    set admin-sport 8443
+end
+config system interface
+    edit "port1"
+        set vdom "root"
+        set mode dhcp
+        set allowaccess ping https ssh fgfm
+        set type physical
+        set snmp-index 1
+    next
+    edit "port2"
+        set vdom "root"
+        set mode dhcp
+        set defaultgw enable
+        set allowaccess ping https ssh fgfm
+        set type physical
+    next
+end
+config firewall address
+    edit "EgressProtected"
+        set subnet 172.16.0.0 255.255.0.0
+    next
+end
+config firewall policy
+    edit 1
+        set name "Egress"
+        set srcintf "port1"
+        set dstintf "port1"
+        set srcaddr "EgressProtected"
+        set dstaddr "all"
+        set action accept
+        set schedule "always"
+        set service "ALL"
+        set fsso disable
+        set nat enable
+    next
+end
+config system link-monitor
+    edit "fgt-monitor"
+        set srcintf "port1"
+        set server "172.16.0.100"
+        set update-cascade-interface disable
+        set update-static-route disable
+    next
+end
+config system automation-action
+   edit "LinkStatus"
+        set action-type alicloud-function
+        set alicloud-account-id "${account_id}"
+        set alicloud-region ${region}
+        set alicloud-version "2016-08-15"
+        set alicloud-service "${function_service}"
+        set alicloud-function "${function_id}"
+    next
+end
+config system automation-trigger
+    edit "aliLinkStatus"
+        set event-type event-log
+        set logid 22922
+    next
+    end
+config system automation-stitch
+    edit "aliLinkStatus"
+        set trigger "aliLinkStatus"
+        set action "LinkStatus"
+    next
+end

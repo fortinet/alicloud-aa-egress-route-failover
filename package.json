@@ -1,0 +1,23 @@
+{
+    "name": "dist",
+    "version": "0.0.1",
+    "description": "",
+    "main": "index.js",
+    "dependencies": {
+        "@alicloud/pop-core": "^1.7.9",
+        "raw-body": "^2.4.1",
+        "tsc": "^1.20150623.0",
+        "tslint": "^6.0.0",
+        "typescript": "^3.7.5"
+    },
+    "devDependencies": {
+        "nyc": "^14.1.1"
+    },
+    "scripts": {
+        "build": "scripts/make-dist.js",
+        "test": "nyc mocha --recursive './test/mocha/*.js'",
+        "start": "functions-framework --target=main"
+    },
+    "author": "",
+    "license": "ISC"
+}

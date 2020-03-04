@@ -1,0 +1,55 @@
+{
+    "extends": "tslint:recommended",
+    "rules": {
+        "arrow-return-shorthand": true,
+        "class-name": true,
+        "component-class-suffix": true,
+        "contextual-lifecycle": true,
+        "deprecation": {
+            "severity": "warning"
+        },
+        "directive-class-suffix": true,
+        "import-blacklist": [true, "rxjs/Rx"],
+        "member-ordering": [
+            true,
+            {
+                "order": ["static-field", "instance-field", "static-method", "instance-method"]
+            }
+        ],
+        "no-arg": true,
+        "no-bitwise": true,
+        "no-duplicate-super": true,
+        "no-empty-interface": true,
+        "no-eval": true,
+        "no-misused-new": true,
+        "no-string-throw": true,
+        "no-unnecessary-initializer": true,
+        "no-shadowed-variable": true,
+        "no-unused-expression": true,
+        "no-var-keyword": true,
+        "no-console": [true, "debug", "info", "time", "timeEnd", "trace"],
+        "no-inferrable-types": [true, "ignore-params"],
+        "no-non-null-assertion": true,
+        "no-redundant-jsdoc": true,
+        "no-switch-case-fall-through": true,
+        "no-conflicting-lifecycle": true,
+        "no-host-metadata-property": true,
+        "no-input-rename": true,
+        "no-inputs-metadata-property": true,
+        "no-output-native": true,
+        "no-output-on-prefix": true,
+        "no-output-rename": true,
+        "no-outputs-metadata-property": true,
+        "object-literal-key-quotes": [true, "as-needed"],
+        "object-literal-sort-keys": false,
+        "ordered-imports": false,
+        "prefer-const": true,
+        "radix": true,
+        "triple-equals": [true, "allow-null-check"],
+        "template-banana-in-box": true,
+        "template-no-negated-async": true,
+        "use-lifecycle-interface": true,
+        "use-pipe-transform-interface": true,
+        "unified-signatures": true
+    }
+}
