@@ -18,7 +18,8 @@ const {
     TCP_HEALTH_CHECK_TIMEOUT = Number(process.env.TCP_HEALTH_CHECK_TIMEOUT) || 3000,
     TCP_PROBE_PORT = Number(process.env.TCP_PROBE_PORT) || 22,
     ROUTE_TABLE_ID: string[] =
-        (process.env.ROUTE_TABLE_ID && process.env.ROUTE_TABLE_ID.split(',')) || [];
+        (process.env.ROUTE_TABLE_ID && process.env.ROUTE_TABLE_ID.split(',')) || [],
+    TIME_BETWEEN_ROUTE_TABLE_CALLS = Number(process.env.TIME_BETWEEN_ROUTE_TABLE_CALLS) || 1500;
 
 const client = new RPCClient({
     accessKeyId: ACCESS_KEY_ID,
@@ -80,9 +81,7 @@ export class RouteFailover {
         routeTableId: string
     ): Promise<void> {
         // Delete the route
-        try {
-            await this.removeRoute(route.InstanceId, routeTableId, route.DestinationCidrBlock);
-        } catch (err) {}
+        await this.removeRoute(route.InstanceId, routeTableId, route.DestinationCidrBlock);
 
         let tempTime = Date.now();
         let currentTime;
@@ -91,7 +90,7 @@ export class RouteFailover {
         while (!isRouteTableAvailable) {
             currentTime = Date.now();
             // Wait 1.5 seconds between calls
-            if (currentTime > tempTime + 1500) {
+            if (currentTime > tempTime + TIME_BETWEEN_ROUTE_TABLE_CALLS) {
                 tempTime = Date.now();
                 try {
                     isRouteTableAvailable = await this.getRouteTableStatus(routeTableId);
@@ -105,13 +104,10 @@ export class RouteFailover {
         while (!isRouteTableAvailable) {
             currentTime = Date.now();
             // Wait 1.5 seconds between calls
-            if (currentTime > tempTime + 1500) {
+            if (currentTime > tempTime + TIME_BETWEEN_ROUTE_TABLE_CALLS) {
                 tempTime = Date.now();
-                try {
-                    isRouteTableAvailable = await this.getRouteTableStatus(routeTableId);
-                } catch (err) {
-                    throw err;
-                }
+
+                isRouteTableAvailable = await this.getRouteTableStatus(routeTableId);
             }
         }
 
@@ -130,7 +126,7 @@ export class RouteFailover {
             }
         }
     }
-    // Return ture/false if route table is currently
+    // Return true/false if route table is busy or free
     public async getRouteTableStatus(routeId): Promise<boolean> {
         let getUpdatedRouteTable: AliCloudModels.AliCloudRoutesList;
         try {
@@ -204,7 +200,7 @@ export class RouteFailover {
                 }
             }
             console.log(`Did not find instance ${instanceId} in ${REGION}. `);
-            return null;
+            return '';
         } else {
             const err = new Error(
                 `Error parsing Instance JSON in getSecondaryEniIp. instanceId: ${instanceId}.`
@@ -258,13 +254,10 @@ export class RouteFailover {
         while (!isRouteTableAvailable) {
             currentTime = Date.now();
             // Wait 1.5 seconds between calls
-            if (currentTime > tempTime + 1500) {
+            if (currentTime > tempTime + TIME_BETWEEN_ROUTE_TABLE_CALLS) {
                 tempTime = Date.now();
-                try {
-                    isRouteTableAvailable = await this.getRouteTableStatus(routeTableId);
-                } catch (err) {
-                    throw err;
-                }
+
+                isRouteTableAvailable = await this.getRouteTableStatus(routeTableId);
             }
         }
         const parameters = {
@@ -349,22 +342,20 @@ exports.main = async (context, req, res): Promise<void> => {
 
     // Check both instances to see if they are healthy since the Link status monitor does not
     // Show the calling instance ID or IP
-    const getPrimaryHealth: boolean = await handleFailOver.getSecondaryEniHealth(
-        PRIMARY_FORTIGATE_ID
-    );
-    const getSecondaryHealth: boolean = await handleFailOver.getSecondaryEniHealth(
-        SECONDARY_FORTIGATE_ID
-    );
+    const [primaryHealthOK, secondaryHealthOK] = await Promise.all([
+        handleFailOver.getSecondaryEniHealth(PRIMARY_FORTIGATE_ID),
 
-    if (!getPrimaryHealth && !getSecondaryHealth) {
+        handleFailOver.getSecondaryEniHealth(SECONDARY_FORTIGATE_ID)
+    ]);
+    if (!primaryHealthOK && !secondaryHealthOK) {
         console.error('Neither Instance reported healthy.');
         // TODO: add probe until back up?
         console.error('Stopping check');
-    } else if (getPrimaryHealth && getSecondaryHealth) {
+    } else if (primaryHealthOK && secondaryHealthOK) {
         console.log('Both Instances reported healthy');
         // IF PIN_TO_INSTANCE enabled and both instances are healthy switch any routes to that instance.
         if (PIN_TO) {
-            // If healthy and PIN_TO_INSTANCE_ID is set to 'tagged'
+            // If healthy and PIN_TO_INSTANCE is set to 'both'
             if (PIN_TO.toLowerCase() === 'both') {
                 console.log('PIN_TO is set to both. Checking routes');
                 // check each route table
@@ -375,7 +366,7 @@ exports.main = async (context, req, res): Promise<void> => {
                             .RouteEntry) {
                             if (item.RouteEntryName !== item.InstanceId) {
                                 // Check to see if the Name is == to a defined Primary or secondary
-                                // if so change that route. This will also avoid over-writting any non-Foriate related values.
+                                // if so change that route. This will also avoid overwriting any non-FortiGate related values.
                                 if (item.RouteEntryName === PRIMARY_FORTIGATE_SEC_ENI) {
                                     console.log(
                                         `Changing route ${item.DestinationCidrBlock} back to ${PRIMARY_FORTIGATE_SEC_ENI}`
@@ -421,7 +412,7 @@ exports.main = async (context, req, res): Promise<void> => {
                 }
             }
         }
-    } else if (getPrimaryHealth && !getSecondaryHealth) {
+    } else if (primaryHealthOK && !secondaryHealthOK) {
         console.log(`Fortigate ${PRIMARY_FORTIGATE_ID} reported healthy
                             ${SECONDARY_FORTIGATE_ID} reported unhealthy
                  `);
@@ -440,7 +431,7 @@ exports.main = async (context, req, res): Promise<void> => {
                 }
             }
         }
-    } else if (!getPrimaryHealth && getSecondaryHealth) {
+    } else if (!primaryHealthOK && secondaryHealthOK) {
         console.log(`Fortigate ${PRIMARY_FORTIGATE_ID} reported unhealthy
                            ${SECONDARY_FORTIGATE_ID} reported healthy
                 `);
