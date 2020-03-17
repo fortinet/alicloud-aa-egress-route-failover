@@ -22,7 +22,7 @@ resource "random_string" "random_name_post" {
 }
 
 data "template_file" "setupPrimary" {
-  template = "${file("${path.module}/ConfigScripts/PrimaryFortigateConfigScript")}"
+  template = "${file("${path.module}/ConfigScripts/primaryfortigateconfigscript")}"
   vars = {
     region     = "${var.region}",
     account_id = "${data.alicloud_account.current.id}"
@@ -32,7 +32,7 @@ data "template_file" "setupPrimary" {
   }
 }
 data "template_file" "setupSecondary" {
-  template = "${file("${path.module}/ConfigScripts/SecondaryFortigateConfigScript")}"
+  template = "${file("${path.module}/ConfigScripts/secondaryfortigateconfigscript")}"
   vars = {
     region     = "${var.region}",
     account_id = "${data.alicloud_account.current.id}"
