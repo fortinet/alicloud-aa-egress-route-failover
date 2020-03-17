@@ -26,7 +26,6 @@ data "template_file" "setupPrimary" {
   vars = {
     region     = "${var.region}",
     account_id = "${data.alicloud_account.current.id}"
-    //"${var.byol == true ? "byol_license_primary" : "byol_dummy_value"}" = "${var.byol == true ? file(var.primary_byol_license_path): "byol_dummy_value"}"
     // Using the function.name attribute will result in a circular dependency
     function_service = "${var.cluster_name}-${random_string.random_name_post.result}"
     function_id      = "Fortigate-AA-Failover-${random_string.random_name_post.result}"
