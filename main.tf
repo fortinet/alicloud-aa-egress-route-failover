@@ -26,6 +26,7 @@ data "template_file" "setupPrimary" {
   vars = {
     region     = "${var.region}",
     account_id = "${data.alicloud_account.current.id}"
+    //"${var.byol == true ? "byol_license_primary" : "byol_dummy_value"}" = "${var.byol == true ? file(var.primary_byol_license_path): "byol_dummy_value"}"
     // Using the function.name attribute will result in a circular dependency
     function_service = "${var.cluster_name}-${random_string.random_name_post.result}"
     function_id      = "Fortigate-AA-Failover-${random_string.random_name_post.result}"
@@ -41,6 +42,7 @@ data "template_file" "setupSecondary" {
     function_id      = "Fortigate-AA-Failover-${random_string.random_name_post.result}"
   }
 }
+
 
 resource "alicloud_ram_role" "ram_role" {
   name     = "${var.cluster_name}-FunctionCompute-Role-${random_string.random_name_post.result}"
@@ -161,6 +163,7 @@ resource "alicloud_vswitch" "vsw_internal_B" {
 }
 // Egress Route to Primary Fortigate
 resource "alicloud_route_entry" "egress" {
+  count = var.split_egress_traffic == false ? 1 : 0
   // The Default Route
   route_table_id = "${alicloud_vpc.vpc.route_table_id}"
   destination_cidrblock = "${var.default_egress_route}" //Default is 0.0.0.0/0
@@ -172,7 +175,6 @@ variable "custom_route_table_count" {
   default = 2
 
 }
-//"${aws_instance.fortigate[count.index].id}"
 resource "alicloud_route_table" "custom_route_tables" {
   count = var.split_egress_traffic == true ? 2 : 0
   vpc_id = alicloud_vpc.vpc.id
@@ -194,13 +196,6 @@ resource "alicloud_route_table_attachment" "custom_route_table_attachment_privat
   vswitch_id     = count.index == 0 ? "${alicloud_vswitch.vsw_internal_A.id}" : "${alicloud_vswitch.vsw_internal_B.id}"
   route_table_id = "${alicloud_route_table.custom_route_tables[count.index].id}"
 }
-
-resource "alicloud_route_table_attachment" "custom_route_table_attachment_public" {
-  count = var.split_egress_traffic == true ? 2 : 0
-  vswitch_id     = count.index == 0 ? "${alicloud_vswitch.vsw.id}" : "${alicloud_vswitch.vsw2.id}"
-  route_table_id = "${alicloud_route_table.custom_route_tables[count.index].id}"
-}
-
 
 //Security Group
 resource "alicloud_security_group" "SecGroup" {
