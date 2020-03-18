@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/no-use-before-define */
+
 import RPCClient from '@alicloud/pop-core';
 import * as net from 'net'; // TCP health check.
 import * as AliCloudModels from './AliCloudModels';
@@ -92,11 +94,7 @@ export class RouteFailover {
             // Wait 1.5 seconds between calls
             if (currentTime > tempTime + TIME_BETWEEN_ROUTE_TABLE_CALLS) {
                 tempTime = Date.now();
-                try {
-                    isRouteTableAvailable = await this.getRouteTableStatus(routeTableId);
-                } catch (err) {
-                    throw err;
-                }
+                isRouteTableAvailable = await this.getRouteTableStatus(routeTableId);
             }
         }
         isRouteTableAvailable = await this.getRouteTableStatus(routeTableId);
@@ -142,7 +140,7 @@ export class RouteFailover {
         // Return true if no Status other than Available is found
         return true;
     }
-    public tcpCheck(fortigateIp, tcpProbePort, tcpHealthCheckTimeout) {
+    public tcpCheck(fortigateIp, tcpProbePort, tcpHealthCheckTimeout): Promise<void> {
         return new Promise((resolve, reject) => {
             console.log(`checking ${fortigateIp} health`);
             setTimeout(() => {
@@ -248,17 +246,11 @@ export class RouteFailover {
         }
     }
     public async removeRoute(nextHopID, routeTableId, destinationCidrBlock): Promise<void> {
-        let tempTime: number = Date.now();
-        let currentTime: number;
         let isRouteTableAvailable: boolean = await this.getRouteTableStatus(routeTableId);
-        while (!isRouteTableAvailable) {
-            currentTime = Date.now();
-            // Wait 1.5 seconds between calls
-            if (currentTime > tempTime + TIME_BETWEEN_ROUTE_TABLE_CALLS) {
-                tempTime = Date.now();
 
-                isRouteTableAvailable = await this.getRouteTableStatus(routeTableId);
-            }
+        while (!isRouteTableAvailable) {
+            await new Promise(resolve => setTimeout(resolve, TIME_BETWEEN_ROUTE_TABLE_CALLS));
+            isRouteTableAvailable = await this.getRouteTableStatus(routeTableId);
         }
         const parameters = {
             RegionId: REGION,
@@ -353,7 +345,7 @@ exports.main = async (context, req, res): Promise<void> => {
         console.error('Stopping check');
     } else if (primaryHealthOK && secondaryHealthOK) {
         console.log('Both Instances reported healthy');
-        // IF PIN_TO_INSTANCE enabled and both instances are healthy switch any routes to that instance.
+        // If PIN_TO_INSTANCE enabled and both instances are healthy switch any routes to that instance.
         if (PIN_TO) {
             // If healthy and PIN_TO_INSTANCE is set to 'both'
             if (PIN_TO.toLowerCase() === 'both') {
@@ -361,54 +353,13 @@ exports.main = async (context, req, res): Promise<void> => {
                 // check each route table
                 for (const routeId of ROUTE_TABLE_ID) {
                     getRoutesList = await handleFailOver.describeRouteTableList(routeId);
-                    if (getRoutesList?.RouteTables?.RouteTable[0]?.RouteEntrys?.RouteEntry) {
-                        for (const item of getRoutesList.RouteTables.RouteTable[0].RouteEntrys
-                            .RouteEntry) {
-                            if (item.RouteEntryName !== item.InstanceId) {
-                                // Check to see if the Name is == to a defined Primary or secondary
-                                // if so change that route. This will also avoid overwriting any non-FortiGate related values.
-                                if (item.RouteEntryName === PRIMARY_FORTIGATE_SEC_ENI) {
-                                    console.log(
-                                        `Changing route ${item.DestinationCidrBlock} back to ${PRIMARY_FORTIGATE_SEC_ENI}`
-                                    );
-                                    await handleFailOver.updateRoute(
-                                        item,
-                                        PRIMARY_FORTIGATE_SEC_ENI,
-                                        routeId
-                                    );
-                                } else if (item.RouteEntryName === SECONDARY_FORTIGATE_SEC_ENI) {
-                                    console.log(
-                                        `Changing route ${item.DestinationCidrBlock} back to ${SECONDARY_FORTIGATE_SEC_ENI}`
-                                    );
-                                    await handleFailOver.updateRoute(
-                                        item,
-                                        SECONDARY_FORTIGATE_SEC_ENI,
-                                        routeId
-                                    );
-                                }
-                            }
-                        }
-                    }
+                    await changeRoutePinToBoth(getRoutesList, routeId);
                 }
             } else if (PIN_TO === PRIMARY_FORTIGATE_SEC_ENI || SECONDARY_FORTIGATE_SEC_ENI) {
                 console.log(`PIN_TO is set to ${PIN_TO} checking routes.`);
                 for (const routeId of ROUTE_TABLE_ID) {
                     getRoutesList = await handleFailOver.describeRouteTableList(routeId);
-                    for (const item of getRoutesList.RouteTables.RouteTable[0].RouteEntrys
-                        .RouteEntry) {
-                        // Compare to ENI to make sure we only change FortiGate specific routes i.e no system generated routes
-                        if (
-                            item.InstanceId !== PIN_TO &&
-                            (item.InstanceId === PRIMARY_FORTIGATE_SEC_ENI ||
-                                item.InstanceId === SECONDARY_FORTIGATE_SEC_ENI)
-                        ) {
-                            console.log(JSON.stringify(item));
-                            console.log(`PIN_TO is set,Changing Route for destination ${item.DestinationCidrBlock}
-                            to ${PIN_TO}
-                            `);
-                            await handleFailOver.updateRoute(item, PIN_TO, routeId);
-                        }
-                    }
+                    await changeRoutePinToInstance(getRoutesList, routeId);
                 }
             }
         }
@@ -454,6 +405,47 @@ exports.main = async (context, req, res): Promise<void> => {
                         console.error(`Error Updating route: ${err}`);
                     }
                 }
+            }
+        }
+    }
+    async function changeRoutePinToBoth(routesList, routeId): Promise<void> {
+        if (routesList?.RouteTables?.RouteTable[0]?.RouteEntrys?.RouteEntry) {
+            for (const item of routesList.RouteTables.RouteTable[0].RouteEntrys.RouteEntry) {
+                if (item.RouteEntryName !== item.InstanceId) {
+                    // Check to see if the Name is == to a defined Primary or secondary
+                    // if so change that route. This will also avoid overwriting any non-FortiGate related values.
+                    if (item.RouteEntryName === PRIMARY_FORTIGATE_SEC_ENI) {
+                        console.log(
+                            `Changing route ${item.DestinationCidrBlock} back to ${PRIMARY_FORTIGATE_SEC_ENI}`
+                        );
+                        await handleFailOver.updateRoute(item, PRIMARY_FORTIGATE_SEC_ENI, routeId);
+                    } else if (item.RouteEntryName === SECONDARY_FORTIGATE_SEC_ENI) {
+                        console.log(
+                            `Changing route ${item.DestinationCidrBlock} back to ${SECONDARY_FORTIGATE_SEC_ENI}`
+                        );
+                        await handleFailOver.updateRoute(
+                            item,
+                            SECONDARY_FORTIGATE_SEC_ENI,
+                            routeId
+                        );
+                    }
+                }
+            }
+        }
+    }
+    async function changeRoutePinToInstance(routesList, routeId): Promise<void> {
+        for (const item of routesList.RouteTables.RouteTable[0].RouteEntrys.RouteEntry) {
+            // Compare to ENI to make sure we only change FortiGate specific routes i.e no system generated routes
+            if (
+                item.InstanceId !== PIN_TO &&
+                (item.InstanceId === PRIMARY_FORTIGATE_SEC_ENI ||
+                    item.InstanceId === SECONDARY_FORTIGATE_SEC_ENI)
+            ) {
+                console.log(JSON.stringify(item));
+                console.log(`PIN_TO is set,Changing Route for destination ${item.DestinationCidrBlock}
+                to ${PIN_TO}
+                `);
+                await handleFailOver.updateRoute(item, PIN_TO, routeId);
             }
         }
     }
