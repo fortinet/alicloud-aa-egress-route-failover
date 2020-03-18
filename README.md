@@ -1,46 +1,80 @@
 # Introduction
 
-FortiGate AA Failover is a Function Compute and terraform module that allows for failover of egress routes.
-The template deploys two functions which check the health of two FortiGates at regular intervals, if one of FortiGates fails a TCP health check the egresss routes are checked and changed to the other FortiGate.
+FortiGate Active-Active failover is a Function Compute and Terraform module that allows for failover of egress routes. The template deploys two functions which check the health of two FortiGates at regular intervals. If one of FortiGates fails a TCP health check, both egress routes are checked and the route is changed to the other FortiGate.
 
-By default the FortiGates are deployed with static IPs and a link-monitor setup between them. If a change in the link status is detected an automation stich will call the healthCheck function and begin the process of changing the routes to the healthy FortiGate.
+By default, the FortiGates are deployed with static IP addresses with a link monitor between them. If a change in the link status is detected, an Automation Stitch will call the health check function and begin the process of changing the routes to the healthy FortiGate. In addition, a timer function calls the health check function every minute.
 
-The script supports multiple route tables. They can be supplied as a comma seperated list without any spaces under the environment variable ROUTE_TABLE_ID.
+The script supports multiple route tables which can be supplied as a comma separated list (no spaces) in the environment variable ROUTE_TABLE_ID.
 
+The Terraform deployment supports different architectures:
+
+1. Split egress traffic
+
+    Two custom route tables will be created, one per Availability Zone (AZ). Each FortiGate will be set as the next hop for that AZ with a default route of 0.0.0.0/0.
+    When a FortiGate fails, the egress route will switch to the other (healthy) FortiGate.
+    When a FortiGate returns to a healthy state, the relevant routes will default back to it. This is currently achieved by looking at the custom name given to a route. By default, the custom routes within the route table will be given the name of an ENI to switch back to on a healthy state.
+
+2. Pin to a specific FortiGate
+
+    Traffic is set to route through a single FortiGate.
+    On failover, the egress route will switch to the secondary FortiGate. On return to a healthy state, the route will switch back to the FortiGate specified in the environment variable PIN_TO.
+
+3. Simple failover
+
+    The environment variable PIN_TO is not set.
+    On failover, the egress routes will switch to a healthy FortiGate. The routes will not switch back on return to a health state.
 
 # Requirements
-- A RAM user with an AccessKey and Secret. For details on creating a RAM user, refer to the AliCloud article Create a RAM user.
-- terraform
+
+To deploy this template, a RAM user with an AccessKey and Secret are required. This user will need access to ECS, VPC, RAM, and FC. For details on creating a RAM user, refer to the AliCloud article [Create a RAM user](https://www.alibabacloud.com/help/doc-detail/28637.htm).
+
+This deployment was tested using:
+
+-   Terraform 0.12.0+
+-   Terraform provider for AliCloud 1.70.2
 
 # Deployment Overview
-The terraform script will create the following:
-- A Function compute service and two functions:
-    A timer function that runs once per minute
-    An http function that will execute the healthchecks and route changes.
-- A VPC
-- Two vswitches
-- A routetable with a default route to the Primary FortiGate
-- Two FortiGates in seperate AZ
-- A logging project and logstore
-- Two Security Groups, one for internal and one for external.
-- An AliCloud RAM policy.
 
+The Terraform script will create the following:
+
+-   A Function Compute service and two functions:
+    -   A timer function that runs once per minute
+    -   An HTTP function that will execute health checks and route changes.
+-   A Virtual Private Cloud (VPC)
+-   Two vswitches
+-   A route table with a default route to the primary FortiGate
+-   Two FortiGates in separate AZs
+-   A logging project and a logstore
+-   Two security groups, one for internal and one for external
+-   An AliCloud RAM policy
 
 # Deployment
-> **Note:**  a RAM user with access to ECS/VPC/RAM/FC is required to deploy.
 
-1. Unzip the release package
-2. In the root directory run `terraform init`
-3. Run `terraform apply -var access_key="<access_key>" -var secret_key="<secret_key>" ` or place the variables into the terraform file
-4. To destroy run `terraform destroy -var access_key="<access_key>" -var secret_key="<secret_key>" `
+> **Note:** A RAM user with access to ECS/VPC/RAM/FC is required.
 
-    The Fortigate Configs deployed via cloud-init can be found under ConfigScripts/ and can be used to configure the deployment as needed.
-    By default they are created with static IPs and a link-monitor between them.
+1. Unzip the FortiGate Active-Active failover package.
+2. In the root directory run `terraform init`.
+3. Confirm and apply the plan with the command:
+    ```sh
+    terraform apply -var access_key="<access_key>" -var secret_key="<secret_key>"
+    ```
+    Alternatively, place variables into the vars.tf or a variables file.
+    To deploy in the second method change `split_egress_traffic=false`:
+    ```sh
+    terraform apply -var access_key="<access_key>" -var secret_key="<secret_key>" -var split_egress_traffic=false
+    ```
+    To destroy the created resources
+
+```sh
+terraform destroy -var access_key="<access_key>" -var secret_key="<secret_key>"
+```
+
+The FortiGate configurations deployed using `cloud-init` can be found under `ConfigScripts/` and can be used to configure the deployment as needed.
 
 # Support
 
 Fortinet-provided scripts in this and other GitHub projects do not fall under the regular Fortinet technical support scope and are not supported by FortiCare Support Services.
-For direct issues, please refer to the [Issues](https://github.com/fortinet/load-balancer-rule-sync/issues) tab of this GitHub project.
+For direct issues, please refer to the [Issues](https://github.com/fortinet/azure-function-load-balancer-rule-sync/issues) tab of this GitHub project.
 For other questions related to this project, contact [github@fortinet.com](mailto:github@fortinet.com).
 
 ## License
