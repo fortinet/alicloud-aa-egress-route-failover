@@ -8,7 +8,7 @@ The script supports multiple route tables which can be supplied as a comma separ
 
 The Terraform deployment supports different architectures:
 
-1. Split egress traffic
+1. Split egress traffic (default deployment)
 
     Two custom route tables will be created, one per Availability Zone (AZ). Each FortiGate will be set as the next hop for that AZ with a default route of 0.0.0.0/0.
     When a FortiGate fails, the egress route will switch to the other (healthy) FortiGate.
@@ -58,12 +58,15 @@ The Terraform script will create the following:
     ```sh
     terraform apply -var access_key="<access_key>" -var secret_key="<secret_key>"
     ```
-    Alternatively, place variables into the vars.tf or a variables file.
-    To deploy in the second method change `split_egress_traffic=false`:
-    ```sh
-    terraform apply -var access_key="<access_key>" -var secret_key="<secret_key>" -var split_egress_traffic=false
-    ```
-    To destroy the created resources
+    Alternatively, place variables into `vars.tf` or a variables file.
+
+To deploy the second architecture (pin to a specific FortiGate), add the var `split_egress_traffic=false`:
+
+```sh
+terraform apply -var access_key="<access_key>" -var secret_key="<secret_key>" -var split_egress_traffic=false
+```
+
+To destroy the created resources, run the command:
 
 ```sh
 terraform destroy -var access_key="<access_key>" -var secret_key="<secret_key>"
