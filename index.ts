@@ -143,20 +143,21 @@ export class RouteFailover {
     public tcpCheck(fortigateIp, tcpProbePort, tcpHealthCheckTimeout): Promise<void> {
         return new Promise((resolve, reject) => {
             console.log(`checking ${fortigateIp} health`);
-            setTimeout(() => {
-                socket.end();
-                reject('timeout');
-            }, tcpHealthCheckTimeout);
             const socket = net.createConnection(tcpProbePort, fortigateIp, () => {
                 console.log(`Probe on port ${tcpProbePort} to ${fortigateIp} connected`);
                 socket.end();
                 resolve();
             });
+            setTimeout(() => {
+                socket.end();
+                reject('timeout');
+            }, tcpHealthCheckTimeout);
             socket.on('error', err => {
                 reject(err);
             });
         });
     }
+
     public async describeECSInstance(region): Promise<AliCloudModels.AliCloudInstance> {
         const parameters = {
             RegionId: region
