@@ -266,7 +266,7 @@ export class RouteFailover {
             console.log(`Removing Route ${destinationCidrBlock}/${nextHopID} from ${routeTableId}`);
             await client.request('DeleteRouteEntry', parameters, options);
         } catch (err) {
-            console.error(`Error in removeRoute. Error deleting route ${JSON.stringify(err)}`);
+            console.error(`Error in removeRoute. Error deleting route ${err.message ¦¦ err}`);
         }
     }
 
@@ -409,7 +409,7 @@ exports.main = async (context, req, res): Promise<void> => {
         }
     }
     // Change Routes for PIN_TO = 'both'
-    // This is the defualt signle custom route per AZ approach. Each FortiGate acts as an egress point.
+    // This is the default single custom route per AZ approach. Each FortiGate acts as an egress point.
     // On return to a healthy state the both FortiGates will handle egress traffic.
     async function changeRoutePinToBoth(routesList, routeId): Promise<void> {
         if (routesList?.RouteTables?.RouteTable[0]?.RouteEntrys?.RouteEntry) {
