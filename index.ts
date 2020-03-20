@@ -1,7 +1,7 @@
-/* eslint-disable @typescript-eslint/no-use-before-define */
-
 import RPCClient from '@alicloud/pop-core';
 import * as net from 'net'; // TCP health check.
+// AliCloudModels is used throughout the doc, this is a linting error.
+// eslint-disable-next-line no-unused-vars
 import * as AliCloudModels from './AliCloudModels';
 
 const {
@@ -87,7 +87,8 @@ export class RouteFailover {
 
         let tempTime = Date.now();
         let currentTime;
-
+        // Check to see if the route table is available to be updated.
+        // Requests can not be done in parallel, or all at once.
         let isRouteTableAvailable = await this.getRouteTableStatus(routeTableId);
         while (!isRouteTableAvailable) {
             currentTime = Date.now();
@@ -99,6 +100,7 @@ export class RouteFailover {
         }
         isRouteTableAvailable = await this.getRouteTableStatus(routeTableId);
         tempTime = Date.now();
+        // Wait for the route to become available. Updates can only happen in serial.
         while (!isRouteTableAvailable) {
             currentTime = Date.now();
             // Wait 1.5 seconds between calls
@@ -142,19 +144,17 @@ export class RouteFailover {
     }
     public tcpCheck(fortigateIp, tcpProbePort, tcpHealthCheckTimeout): Promise<void> {
         return new Promise((resolve, reject) => {
-            console.log(`checking ${fortigateIp} health`);
-            const socket = net.createConnection(tcpProbePort, fortigateIp, () => {
-                console.log(`Probe on port ${tcpProbePort} to ${fortigateIp} connected`);
-                socket.end();
-                resolve();
-            });
-            setTimeout(() => {
+            const socket = net.createConnection(tcpProbePort, fortigateIp, connected);
+            const timeout = setTimeout(() => {
                 socket.end();
                 reject('timeout');
             }, tcpHealthCheckTimeout);
-            socket.on('error', err => {
-                reject(err);
-            });
+            socket.on('error', reject);
+            function connected() {
+                socket.end();
+                clearTimeout(timeout);
+                resolve();
+            }
         });
     }
 
@@ -266,8 +266,7 @@ export class RouteFailover {
             console.log(`Removing Route ${destinationCidrBlock}/${nextHopID} from ${routeTableId}`);
             await client.request('DeleteRouteEntry', parameters, options);
         } catch (err) {
-            console.error(`Error in removeRoute. Error deleting route ${err}`);
-            throw err;
+            console.error(`Error in removeRoute. Error deleting route ${JSON.stringify(err)}`);
         }
     }
 
@@ -409,8 +408,15 @@ exports.main = async (context, req, res): Promise<void> => {
             }
         }
     }
+    // Change Routes for PIN_TO = 'both'
+    // This is the defualt signle custom route per AZ approach. Each FortiGate acts as an egress point.
+    // On return to a healthy state the both FortiGates will handle egress traffic.
     async function changeRoutePinToBoth(routesList, routeId): Promise<void> {
         if (routesList?.RouteTables?.RouteTable[0]?.RouteEntrys?.RouteEntry) {
+            // Serialized because AliCloud can not handle more than one operation on a route
+            // Table at a time.
+            // The updateRoute/createRoute/removeRoute funcitons all have checks to see if a route is being operated on
+
             for (const item of routesList.RouteTables.RouteTable[0].RouteEntrys.RouteEntry) {
                 if (item.RouteEntryName !== item.InstanceId) {
                     // Check to see if the Name is == to a defined Primary or secondary
@@ -424,6 +430,8 @@ exports.main = async (context, req, res): Promise<void> => {
                         console.log(
                             `Changing route ${item.DestinationCidrBlock} back to ${SECONDARY_FORTIGATE_SEC_ENI}`
                         );
+                        // Handle each request individually and wait for it to finish.
+                        // Requests can not run in parallel.
                         await handleFailOver.updateRoute(
                             item,
                             SECONDARY_FORTIGATE_SEC_ENI,
@@ -434,6 +442,7 @@ exports.main = async (context, req, res): Promise<void> => {
             }
         }
     }
+    // Change Routes when PIN_TO is set to a single instance
     async function changeRoutePinToInstance(routesList, routeId): Promise<void> {
         for (const item of routesList.RouteTables.RouteTable[0].RouteEntrys.RouteEntry) {
             // Compare to ENI to make sure we only change FortiGate specific routes i.e no system generated routes
@@ -446,6 +455,10 @@ exports.main = async (context, req, res): Promise<void> => {
                 console.log(`PIN_TO is set,Changing Route for destination ${item.DestinationCidrBlock}
                 to ${PIN_TO}
                 `);
+                // Serialized because AliCloud can not handle more than one operation on a route
+                // Table at a time.
+                // The updateRoute/createRoute/removeRoute funcitons all have checks to see if a route is being operated on
+
                 await handleFailOver.updateRoute(item, PIN_TO, routeId);
             }
         }
