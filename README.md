@@ -85,11 +85,11 @@ This is most likely a timeout, re-running the `terraform -apply` command should 
 
 > Error: [ERROR] terraform-provider-alicloud/alicloud/resource_alicloud_instance.go:382: [ERROR] terraform-provider-alicloud/alicloud/service_alicloud_ecs.go:409: The instance type ecs.c5.large is solded out or is not supported in the zone <zone>
 
-This error indicatates a resource constraint, in this case you may need to change the instance type.
+This error indicates a resource constraint, in this case you may need to change the instance type.
 
 > `Warning: Interpolation-only expressions are deprecated`
 
-Ensure you are using terraform .12+. Syntax differences between .11 and .12 make it incompatiable with this terraform file.
+Ensure you are using Terraform 0.12+. Syntax differences between 0.11 and 0.12 make it incompatible with this Terraform file.
 
 # Support
 
