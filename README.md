@@ -74,6 +74,23 @@ terraform destroy -var access_key="<access_key>" -var secret_key="<secret_key>"
 
 The FortiGate configurations deployed using `cloud-init` can be found under `ConfigScripts/` and can be used to configure the deployment as needed.
 
+# Troubleshooting
+
+The following is a guide to some common errors you may encounter.
+
+> Error: [ERROR] terraform-provider-alicloud/alicloud/resource_alicloud_log_project.go:61:
+> Resource alicloud_log_project CreateProject Failed!!! [SDK aliyun-log-go-sdk ERROR]
+
+This is most likely a timeout, re-running the `terraform -apply` command should create the resource successfully.
+
+> Error: [ERROR] terraform-provider-alicloud/alicloud/resource_alicloud_instance.go:382: [ERROR] terraform-provider-alicloud/alicloud/service_alicloud_ecs.go:409: The instance type ecs.c5.large is solded out or is not supported in the zone <zone>
+
+This error indicatates a resource constraint, in this case you may need to change the instance type.
+
+> `Warning: Interpolation-only expressions are deprecated`
+
+Ensure you are using terraform .12+. Syntax differences between .11 and .12 make it incompatiable with this terraform file.
+
 # Support
 
 Fortinet-provided scripts in this and other GitHub projects do not fall under the regular Fortinet technical support scope and are not supported by FortiCare Support Services.
