@@ -53,7 +53,7 @@ variable "default_egress_route" {
 //This allows each fortigate to handle egress traffic Indepedently in a healthy state.
 variable "split_egress_traffic" {
   type    = bool
-  default = false
+  default = true
 }
 
 //Retrieves the current account for use with Function Compute
@@ -72,6 +72,7 @@ variable "instance_ami" {
   default = "m-0xif6xxwhjlqhoaqjrr6"
 }
 
+
 //Define the instance family to be used.
 //Different regions will contain various instance families
 //default family : ecs.sn2ne
@@ -87,6 +88,7 @@ data "alicloud_instance_types" "types_ds" {
   memory_size          = 4
   instance_type_family = var.instance //ecs.g5 is default
 }
+
 
 data "alicloud_images" "ecs_image" {
   owners      = "marketplace"
