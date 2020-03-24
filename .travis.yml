@@ -1,0 +1,15 @@
+language: node_js
+node_js: 12.13.1
+script:
+  - npm install
+  - npm run setup
+  - git describe
+deploy:
+  provider: releases
+  file_glob: true
+  file: *
+  skip_cleanup: true
+  on:
+    repo: fortinet/alicloud-aa-egress-route-failover
+    tags: true
+    all_branches: true

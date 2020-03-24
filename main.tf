@@ -454,7 +454,7 @@ resource "alicloud_instance" "PrimaryFortigate" {
   user_data = "${data.template_file.setupPrimary.rendered}"
   internet_max_bandwidth_in = 200
   internet_max_bandwidth_out = 100
-  private_ip = "172.16.0.100"
+  private_ip = "${var.primary_fortigate_private_ip}" //Default 172.16.0.100
   //Logging Disk
   data_disks {
     size = 30
@@ -487,7 +487,7 @@ resource "alicloud_instance" "SecondaryFortigate" {
   user_data = "${data.template_file.setupSecondary.rendered}"
   internet_max_bandwidth_in = 200
   internet_max_bandwidth_out = 100
-  private_ip = "172.16.8.100"
+  private_ip = "${var.secondary_fortigate_private_ip}"
 
   //Logging Disk
   data_disks {

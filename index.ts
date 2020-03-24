@@ -266,7 +266,7 @@ export class RouteFailover {
             console.log(`Removing Route ${destinationCidrBlock}/${nextHopID} from ${routeTableId}`);
             await client.request('DeleteRouteEntry', parameters, options);
         } catch (err) {
-            console.error(`Error in removeRoute. Error deleting route ${err.message ¦¦ err}`);
+            console.error(`Error in removeRoute. Error deleting route ${err.message || err}`);
         }
     }
 

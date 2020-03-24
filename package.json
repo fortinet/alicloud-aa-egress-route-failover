@@ -6,7 +6,6 @@
     "dependencies": {
         "@alicloud/pop-core": "^1.7.9",
         "raw-body": "^2.4.1",
-        "tsc": "^1.20150623.0",
         "typescript": "^3.7.5"
     },
     "devDependencies": {
@@ -20,7 +19,7 @@
         "eslint-plugin-prettier": "^3.1.2"
     },
     "scripts": {
-        "build": "scripts/make-dist.js",
+        "build": "npx tsc && cp -ap node_modules dist/ && zip dist/failoverAAindex.zip dist/* && zip dist/callHealthCheck.zip dist/node_modules dist/callHealthCheck.js",
         "test": "nyc mocha --recursive './test/mocha/*.js'",
         "start": "functions-framework --target=main"
     },
