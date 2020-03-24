@@ -5,6 +5,7 @@
     "main": "index.js",
     "dependencies": {
         "@alicloud/pop-core": "^1.7.9",
+        "axios": "^0.19.2",
         "raw-body": "^2.4.1",
         "typescript": "^3.7.5"
     },
