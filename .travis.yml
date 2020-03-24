@@ -1,14 +1,13 @@
 language: node_js
 node_js: 12.13.1
 script:
-    - npm install
-    - npm run build
+- npm install
+- npm run build
 deploy:
-    provider: releases
-    file_glob: true
-    file: ./*
-    skip_cleanup: true
-    on:
-        repo: fortinet/alicloud-aa-egress-route-failover
-        tags: true
-        all_branches: true
+  provider: releases
+  api_key:
+    secure: OWTqRDhGEPg62RRsV2uHWYnPwGLphNC+ycTCbv1/UA1nqzAzX99kXbH8nHRYiuYq7apaEDO3jVjuDZcLi93G+I6fKI8inGzUXiqhxU9unalo+2iN0HyUzlP8qHfNaSfHeVm74Tj4GJH/FtZKRX67YaA0iESUDkVOjoVZDhqli5tykMyGBFJe5t01bTiWC15LaBCdwXnqmkztNOdlNNaBAL6AP5QOJKB/cp3+oiV+ZEE/E6zrPPalWy6++dE98w+2zwtxxtzaw1Lp0IXuD7w44giCe5tvG6H5nm7mffD2coQ8YTYpUUp3xscBIEugBkM725OpA6tCeH+jWrsRQw/vr87nOV1nvzLk/M/EN062KMhGHTH2+ufu67CExBNoT6NsyFCDyLblQuEWLMgBkemqwUoujMLEpjvdgYAXBhTF1ugzgHGqwoR7aml50dAVEWKKybCq2g2DPRpaCDlno7xCpxfZ67uSJH7bDa5CpfNyGe+NsknWpoWxE2aJktyjG9wsN1YFynJsQHLpeEHyWJaSfdR9WUjLYEvPMuDSsaO0t21SpVREmaN+BvntUoG53eFPo9k+WhKh+71BaJUX/8EMz4MJ0p7LeAWeZuu9rvTTrNvLOaOEYJpMOqwIVCr25RZsyeW+UQpN626XcVg3val/nnwJ1ImIuZS4b+JQb+zIVkw=
+  file: "./*"
+  on:
+    repo: fortinet/alicloud-aa-egress-route-failover
+    branch: dev_add_travis
