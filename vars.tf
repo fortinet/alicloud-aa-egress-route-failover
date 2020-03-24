@@ -49,6 +49,15 @@ variable "default_egress_route" {
   type    = string
   default = "0.0.0.0/0"
 }
+variable "primary_fortigate_private_ip" {
+  type    = string
+  default = "172.16.0.100"
+}
+variable "secondary_fortigate_private_ip" {
+  type    = string
+  default = "172.16.8.100"
+}
+
 //If set to true. Creates a custom route table per zone.
 //This allows each fortigate to handle egress traffic Indepedently in a healthy state.
 variable "split_egress_traffic" {
