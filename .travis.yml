@@ -10,4 +10,5 @@ deploy:
     file: 'alicloud-aa-egress-failover.zip'
     on:
         repo: fortinet/alicloud-aa-egress-route-failover
+        tags: true
         all_branches: true
