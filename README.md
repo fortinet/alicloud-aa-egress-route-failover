@@ -79,7 +79,7 @@ The FortiGate configurations deployed using `cloud-init` can be found under `Con
 The following is a guide to some common errors you may encounter.
 
 > **Message**: Error: [ERROR] terraform-provider-alicloud/alicloud/resource_alicloud_log_project.go:61:
-> **Message**: Resource alicloud_log_project CreateProject Failed!!! [SDK aliyun-log-go-sdk ERROR]
+> Resource alicloud_log_project CreateProject Failed!!! [SDK aliyun-log-go-sdk ERROR]
 
 This error is most likely due to a timeout. The solution is to re-run the`terraform -apply` command.
 
@@ -87,7 +87,7 @@ This error is most likely due to a timeout. The solution is to re-run the`terraf
 
 This error indicates a resource constraint. The solution is to change the instance type.
 
-> `Warning: Interpolation-only expressions are deprecated`
+> **Message** : `Warning: Interpolation-only expressions are deprecated`
 
 This warning is due to syntax differences between 0.11 and 0.12. These syntax differences are incompatible with this Terraform file. Ensure you are using Terraform 0.12+.
 
