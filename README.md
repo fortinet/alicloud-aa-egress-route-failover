@@ -78,18 +78,18 @@ The FortiGate configurations deployed using `cloud-init` can be found under `Con
 
 The following is a guide to some common errors you may encounter.
 
-> Error: [ERROR] terraform-provider-alicloud/alicloud/resource_alicloud_log_project.go:61:
+> **Message**: Error: [ERROR] terraform-provider-alicloud/alicloud/resource_alicloud_log_project.go:61:
 > Resource alicloud_log_project CreateProject Failed!!! [SDK aliyun-log-go-sdk ERROR]
 
-This is most likely a timeout, re-running the `terraform -apply` command should create the resource successfully.
+This error is most likely due to a timeout. The solution is to re-run the`terraform -apply` command.
 
-> Error: [ERROR] terraform-provider-alicloud/alicloud/resource_alicloud_instance.go:382: [ERROR] terraform-provider-alicloud/alicloud/service_alicloud_ecs.go:409: The instance type ecs.c5.large is solded out or is not supported in the zone <zone>
+> **Message**: Error: [ERROR] terraform-provider-alicloud/alicloud/resource_alicloud_instance.go:382: [ERROR] terraform-provider-alicloud/alicloud/service_alicloud_ecs.go:409: The instance type ecs.c5.large is solded out or is not supported in the zone <zone>
 
-This error indicates a resource constraint, in this case you may need to change the instance type.
+This error indicates a resource constraint. The solution is to change the instance type.
 
-> `Warning: Interpolation-only expressions are deprecated`
+> **Message** : `Warning: Interpolation-only expressions are deprecated`
 
-Ensure you are using Terraform 0.12+. Syntax differences between 0.11 and 0.12 make it incompatible with this Terraform file.
+This warning is due to syntax differences between 0.11 and 0.12. These syntax differences are incompatible with this Terraform file. Ensure you are using Terraform 0.12+.
 
 # Support
 
