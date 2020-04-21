@@ -48,7 +48,7 @@ The Terraform script will create the following:
 - Two security groups, one for internal and one for external
 - An AliCloud RAM policy
 
-The following diagram demonstrates the default setup:
+The default setup is shown below:
 
 ![FortiOS Admin Profile](./imgs/Diagram2_AA.png)
 
