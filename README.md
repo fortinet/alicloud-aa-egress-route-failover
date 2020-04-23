@@ -91,7 +91,7 @@ This error is most likely due to a timeout. The solution is to re-run the`terraf
 
 This error indicates a resource constraint. The solution is to change the instance type.
 
-> **Message** : Warning: Interpolation-only expressions are deprecated
+> **Message**: Warning: Interpolation-only expressions are deprecated
 
 This warning is due to syntax differences between 0.11 and 0.12. These syntax differences are incompatible with this Terraform file. Ensure you are using Terraform 0.12+.
 
