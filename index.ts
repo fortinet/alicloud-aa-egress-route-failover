@@ -326,7 +326,7 @@ export class RouteFailover {
         }
     }
 }
-exports.main = async (context, req, res): Promise<void> => {
+exports.main = async (req, response): Promise<void> => {
     console.log('Function Started');
     let getRoutesList: AliCloudModels.AliCloudRoutesList;
 
@@ -354,12 +354,18 @@ exports.main = async (context, req, res): Promise<void> => {
                 for (const routeId of ROUTE_TABLE_ID) {
                     getRoutesList = await handleFailOver.describeRouteTableList(routeId);
                     await changeRoutePinToBoth(getRoutesList, routeId);
+                    response.setStatusCode(200)
+                    response.setHeader('content-type', 'application/json')
+                    response.send('')
                 }
             } else if (PIN_TO === PRIMARY_FORTIGATE_SEC_ENI || SECONDARY_FORTIGATE_SEC_ENI) {
                 console.log(`PIN_TO is set to ${PIN_TO} checking routes.`);
                 for (const routeId of ROUTE_TABLE_ID) {
                     getRoutesList = await handleFailOver.describeRouteTableList(routeId);
                     await changeRoutePinToInstance(getRoutesList, routeId);
+                    response.setStatusCode(200)
+                    response.setHeader('content-type', 'application/json')
+                    response.send('')
                 }
             }
         }
@@ -376,6 +382,9 @@ exports.main = async (context, req, res): Promise<void> => {
                     // If secondaryRoute is found within Route table, change to be primary
                     try {
                         await handleFailOver.updateRoute(item, PRIMARY_FORTIGATE_SEC_ENI, routeId);
+                        response.setStatusCode(200)
+                        response.setHeader('content-type', 'application/json')
+                        response.send('')
                     } catch (err) {
                         console.error(`Errror  Updating route:${err}`);
                     }
@@ -401,6 +410,10 @@ exports.main = async (context, req, res): Promise<void> => {
                             SECONDARY_FORTIGATE_SEC_ENI,
                             routeId
                         );
+                        await handleFailOver.updateRoute(item, PRIMARY_FORTIGATE_SEC_ENI, routeId);
+                        response.setStatusCode(200)
+                        response.setHeader('content-type', 'application/json')
+                        response.send('')
                     } catch (err) {
                         console.error(`Error Updating route: ${err}`);
                     }
