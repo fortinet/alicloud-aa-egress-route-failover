@@ -6,7 +6,7 @@ const {
     API_KEY
 } = process.env;
 
-exports.callHealthCheck = async function(){
+exports.callHealthCheck = async function(event, context, callback):Promise<void>{
         console.log(`Timer Function Called`)
         var url =  FULL_URL;
         const agent = new https.Agent({
@@ -20,12 +20,13 @@ exports.callHealthCheck = async function(){
         };
         try {
             console.log(`Calling ${FULL_URL}`)
-            const response = await axios.get(url, options);
-            console.log(response.data)
-            return response.data;
+            await axios.get(url, options);
         } catch (err) {
-            throw console.error(`Error retrieving VIP data from Fortigate: ${url}. Error : ${err} `);
+            throw console.error(`Error in CallHealthCheck Function. Error : ${err} `);
         }
+        // Terminate function.
+        callback(null, 'CallHealthCheck Terminated.');
+
     }
 if (module === require.main) {
     exports.callHeallthCheck(console.log);

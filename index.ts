@@ -326,7 +326,7 @@ export class RouteFailover {
         }
     }
 }
-exports.main = async (req, response): Promise<void> => {
+exports.main = async (request, response): Promise<void> => {
     console.log('Function Started');
     let getRoutesList: AliCloudModels.AliCloudRoutesList;
 
