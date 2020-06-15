@@ -354,21 +354,20 @@ exports.main = async (req, response): Promise<void> => {
                 for (const routeId of ROUTE_TABLE_ID) {
                     getRoutesList = await handleFailOver.describeRouteTableList(routeId);
                     await changeRoutePinToBoth(getRoutesList, routeId);
-                    response.setStatusCode(200)
-                    response.setHeader('content-type', 'application/json')
-                    response.send('')
                 }
             } else if (PIN_TO === PRIMARY_FORTIGATE_SEC_ENI || SECONDARY_FORTIGATE_SEC_ENI) {
                 console.log(`PIN_TO is set to ${PIN_TO} checking routes.`);
                 for (const routeId of ROUTE_TABLE_ID) {
                     getRoutesList = await handleFailOver.describeRouteTableList(routeId);
                     await changeRoutePinToInstance(getRoutesList, routeId);
-                    response.setStatusCode(200)
-                    response.setHeader('content-type', 'application/json')
-                    response.send('')
                 }
             }
+
         }
+        response.setStatusCode(200)
+        response.setHeader('content-type', 'application/json')
+        response.send('')
+
     } else if (primaryHealthOK && !secondaryHealthOK) {
         console.log(`Fortigate ${PRIMARY_FORTIGATE_ID} reported healthy
                             ${SECONDARY_FORTIGATE_ID} reported unhealthy
@@ -382,15 +381,18 @@ exports.main = async (req, response): Promise<void> => {
                     // If secondaryRoute is found within Route table, change to be primary
                     try {
                         await handleFailOver.updateRoute(item, PRIMARY_FORTIGATE_SEC_ENI, routeId);
-                        response.setStatusCode(200)
-                        response.setHeader('content-type', 'application/json')
-                        response.send('')
                     } catch (err) {
                         console.error(`Errror  Updating route:${err}`);
                     }
                 }
             }
         }
+        //Response is a buffer, expects a string.
+        //Sending the response should start the termination of the function, which is the main goal.
+        response.setStatusCode(200)
+        response.setHeader('content-type', 'application/json')
+        response.send('')
+
     } else if (!primaryHealthOK && secondaryHealthOK) {
         console.log(`Fortigate ${PRIMARY_FORTIGATE_ID} reported unhealthy
                            ${SECONDARY_FORTIGATE_ID} reported healthy
@@ -411,15 +413,15 @@ exports.main = async (req, response): Promise<void> => {
                             routeId
                         );
                         await handleFailOver.updateRoute(item, PRIMARY_FORTIGATE_SEC_ENI, routeId);
-                        response.setStatusCode(200)
-                        response.setHeader('content-type', 'application/json')
-                        response.send('')
                     } catch (err) {
                         console.error(`Error Updating route: ${err}`);
                     }
                 }
             }
         }
+        response.setStatusCode(200)
+        response.setHeader('content-type', 'application/json')
+        response.send('')
     }
     // Change Routes for PIN_TO = 'both'
     // This is the default single custom route per AZ approach. Each FortiGate acts as an egress point.
