@@ -26,5 +26,5 @@ exports.callHealthCheck = async function(event, context, callback): Promise<void
     callback(null, 'CallHealthCheck Terminated.');
 };
 if (module === require.main) {
-    exports.callHeallthCheck(console.log);
+    exports.callHealthCheck(console.log);
 }
