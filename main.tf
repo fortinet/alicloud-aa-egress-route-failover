@@ -281,6 +281,7 @@ resource "alicloud_security_group_rule" "allow_all_tcp_egress_FC" {
 
 //Create the Function Service
 resource "alicloud_fc_service" "fortigate-failover-service" {
+
   depends_on = [alicloud_ram_role.ram_role]
   name = "${var.cluster_name}-${random_string.random_name_post.result}" //Removed "service" from name to keep URL under 127 characters.
   description = "Created by terraform"

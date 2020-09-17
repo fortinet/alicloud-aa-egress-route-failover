@@ -326,7 +326,7 @@ export class RouteFailover {
         }
     }
 }
-exports.main = async (context, req, res): Promise<void> => {
+exports.main = async (request, response): Promise<void> => {
     console.log('Function Started');
     let getRoutesList: AliCloudModels.AliCloudRoutesList;
 
@@ -362,7 +362,12 @@ exports.main = async (context, req, res): Promise<void> => {
                     await changeRoutePinToInstance(getRoutesList, routeId);
                 }
             }
+
         }
+        response.setStatusCode(200)
+        response.setHeader('content-type', 'application/json')
+        response.send('')
+
     } else if (primaryHealthOK && !secondaryHealthOK) {
         console.log(`Fortigate ${PRIMARY_FORTIGATE_ID} reported healthy
                             ${SECONDARY_FORTIGATE_ID} reported unhealthy
@@ -382,6 +387,12 @@ exports.main = async (context, req, res): Promise<void> => {
                 }
             }
         }
+        //Response is a buffer, expects a string.
+        //Sending the response should start the termination of the function, which is the main goal.
+        response.setStatusCode(200)
+        response.setHeader('content-type', 'application/json')
+        response.send('')
+
     } else if (!primaryHealthOK && secondaryHealthOK) {
         console.log(`Fortigate ${PRIMARY_FORTIGATE_ID} reported unhealthy
                            ${SECONDARY_FORTIGATE_ID} reported healthy
@@ -401,12 +412,16 @@ exports.main = async (context, req, res): Promise<void> => {
                             SECONDARY_FORTIGATE_SEC_ENI,
                             routeId
                         );
+                        await handleFailOver.updateRoute(item, PRIMARY_FORTIGATE_SEC_ENI, routeId);
                     } catch (err) {
                         console.error(`Error Updating route: ${err}`);
                     }
                 }
             }
         }
+        response.setStatusCode(200)
+        response.setHeader('content-type', 'application/json')
+        response.send('')
     }
     // Change Routes for PIN_TO = 'both'
     // This is the default single custom route per AZ approach. Each FortiGate acts as an egress point.
